@@ -239,7 +239,7 @@ def NextShotSetup(handicap, D_hole):
         setHoleDistance(newHoleDistance)
         print("################################################")
         
-        return  [D_travel, newHoleDistance, yAxisDistToHole, xAxisDistToHole]
+        return  [D_travel, newHoleDistance, yAxisDistToHole, xAxisDistToHole, PreTheta]
     
 def simulatePlayerHole(HoleDistance, handicapArg):
         #global putterCount
