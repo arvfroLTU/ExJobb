@@ -20,13 +20,12 @@ activePlayer =  TurnOrder[0]
 print(activePlayer, "is first to play")
 Distances = {"Player1": holeLength, "Player2": holeLength, "Player3": holeLength, "Player4": holeLength}
 
-#tuple pos[0] = general distance,  tuple pos[1] = yAxis distance tuple pos[2] = xAxis distance
-Distances2 = {"Player1": [holeLength, holeLength, 0], "Player2": [holeLength, holeLength, 0], "Player3": [holeLength, holeLength, 0], "Player4": [holeLength, holeLength, 0]}
 
 #keeps track of players while approaching their ball during other players turns [0] for x, [1] for y, [2] for most recent theta angle
 PlayerPositions = {"Player1": [0, holeLength], "Player2": [0, holeLength], "Player3": [0, holeLength], "Player4": [0, holeLength]} #TODO fetch from DB
 BallPositions = {"Player1": [0, holeLength, 0], "Player2": [0, holeLength, 0], "Player3": [0, holeLength, 0], "Player4": [0, holeLength, 0]} #TODO fetch from DB
 
+PlayerMovements = {"Player1": [], "Player2": [], "Player3": [], "Player4": []} #TODO fetch from DB
 
 def ChangeTurnOrder(turnOrder, player):
     turnOrder.remove(player)
@@ -48,15 +47,18 @@ def TeeTimeEstimation():
     
     print(P_Hcp[activePlayer], "is the handicap of the first player")
     
+    tempY = 0           #these three hold the positions of the player to shoot first after moving away from tee
+    tempX = 0           # it's for an edge case. time calculation doesn't work without it
+    tempTheta = 0
+    
     yAxisGroup= 0
     totalShots = 0
     TimedWalks = []  # since players normally move concurrently, only the walkups to the worst shots should count for the amount of time 
-    timeKeeping  = []
     NoWalkUp =4     #since no player walks up to tee, this cant amount for travel time
     
     
     # Simulation of single player doing one shot
-    while all(value != 0 for value in Distances.values()):
+    while any(value != 0 for value in Distances.values()):
         
         print("player is", activePlayer, "with handicap", P_Hcp[activePlayer])
         
@@ -70,14 +72,8 @@ def TeeTimeEstimation():
         Shot = ShotSim.NextShotSetup(P_Hcp[activePlayer], Distances[activePlayer])
         D_walked, D_ToHole, yAxisLeft, xAxisDisc, theta = Shot
         
-        #store Active player  start position
-        #Active_X_StartDist_Player = Distances2[activePlayer][2] #starting distance for active player during current shot
-        #Active_Y_StartDist_Player = Distances2[activePlayer][1] #starting distance for active player during current shot
-        #ActiveStartDist = Distances[activePlayer] #starting distance for active player during current shot
         
-        #update player? position
-        Distances2[activePlayer][2] = xAxisDisc #update xAxis distance to hole for active player
-        Distances2[activePlayer][1] = yAxisLeft #update yAxis distance for active player
+        #keep track of last player's distance to Hole
         Distances[activePlayer] = D_ToHole # update distance left to hole for active player after shot
         
         #store ball position
@@ -98,61 +94,83 @@ def TeeTimeEstimation():
         
         if NoWalkUp  <= 0:  # cases after players have left starting tee  
             
-                if furthestPlayer != activePlayer: #this means the current player has shot themself out of last place
-                   
-                   
-                    yAxisGroup = BallPositions[furthestPlayer][1] #yAxis distance that the group moves to current last player
+            flag= 0
+            
+            # if NoWalkUp == 0:
+            #    flag = 1
+            #    PlayerMovements[activePlayer].append(holeLength -tempY)  #add distance walked for new player furthest from hole
+            #    PlayerPositions[activePlayer][0] = tempX #update xAxis distance to hole for player
+            #    PlayerPositions[activePlayer][1] = tempY #update yAxis distance for player
+            #    print("CHECK")
+                
+                
+            if furthestPlayer != activePlayer: #this means the current player has shot themself out of last place
+                
+                yAxisGroup = BallPositions[furthestPlayer][1] #yAxis distance that the group moves to current last player
+                print("Y Axis distance left to hole for furthest player is: ", yAxisGroup)
+                
+                #TODO Fix so that it is the individual walk of the furthest player
+                TimedWalks.append(Groupwalk) #add distance walked for new player furthest from hole 
+                TimedWalks.append("Player Switch Groupwalk")
+                
+                #MOVE OTHER PLAYERS TO Y AXIS OF FURTHEST PLAYER BUT TOWARDS THEIR OWN BALL
+                
+                for player in TurnOrder:
                     
-                    print("yAxisSum is: ", yAxisGroup)
+                    if player != furthestPlayer and PlayerPositions[player][1] > math.fabs(yAxisGroup): #only move players who are not the furthest or the active player
+                        
+                        #Using trigonometry to track non last-place players 
+                        yMovement= yAxisGroup - PlayerPositions[player][1]
+                        angle = BallPositions[player][2]
+                        hypotenuse= (yMovement)/math.cos(angle) #length travelled
+
+
+                        NonActivePlayer_X =math.sqrt((hypotenuse**2) - (yMovement**2)) #xAxis distance player moves while approaching ball
+                        PlayerPositions[player][0] = PlayerPositions[player][0] + NonActivePlayer_X #update xAxis distance to hole for player
+                        PlayerPositions[player][1] = PlayerPositions[player][1] + yMovement #update yAxis distance for player
+                        
+                        if abs(hypotenuse) > 0.01:
+                            PlayerMovements[player].append(math.fabs(hypotenuse))
+                
+                
+            else : #furthest player remains the active player
+                if flag == 0:
                     
-                    #D_walked = (holeLength - Distances[furthestPlayer]) + yAxisSum #distance walked to the furthest player
-                    
-                    #TODO Fix so that it is the individual walk of the furthest player
-                    TimedWalks.append(Groupwalk) #add distance walked for new player furthest from hole 
-                    
-                    
-                    TimedWalks.append("Player Switch")
-                    
-                    #MOVE OTHER PLAYERS TO Y AXIS OF FURTHEST PLAYER BUT TOWARDS THEIR OWN BALL
+                    #logging
+                    TimedWalks.append(D_walked)
+                    TimedWalks.append("Player stays D " +str(activePlayer))
+                    PlayerMovements[activePlayer].append(math.fabs(D_walked))
+                    PlayerPositions[activePlayer][0] = BallPositions[activePlayer][0] 
+                    PlayerPositions[activePlayer][1] = BallPositions[activePlayer][1] #update xAxis distance to hole for active player
                     
                     for player in TurnOrder:
-                        
-                        if player != furthestPlayer and PlayerPositions[player][1] < yAxisGroup:
+                    
+                        if player != activePlayer and PlayerPositions[player][1] > math.fabs(yAxisGroup): #only move players who are not the furthest or the active player
                             
                             #Using trigonometry to track non last-place players 
                             yMovement= yAxisGroup - PlayerPositions[player][1]
                             angle = BallPositions[player][2]
-                            hypotenuse= (yMovement)/math.cos(angle)
-                            
+                            hypotenuse= (yMovement)/math.cos(angle) #length travelled
+
+
                             NonActivePlayer_X =math.sqrt((hypotenuse**2) - (yMovement**2)) #xAxis distance player moves while approaching ball
                             PlayerPositions[player][0] = PlayerPositions[player][0] + NonActivePlayer_X #update xAxis distance to hole for player
                             PlayerPositions[player][1] = PlayerPositions[player][1] + yMovement #update yAxis distance for player
                             
-                            
-                            
-                            Distances2[player][1] = Distances2[furthestPlayer][1] 
-                    
-                    
-                else:
-                    TimedWalks.append(D_walked)
-                    TimedWalks.append("Player stays")
-                    PlayerPositions[activePlayer][0] = BallPositions[activePlayer][0] 
-                    PlayerPositions[activePlayer][1] = BallPositions[activePlayer][1] #update xAxis distance to hole for active player
-                    
+                            if abs(hypotenuse) > 0.01:
+                                PlayerMovements[player].append(math.fabs(hypotenuse))
+                        
         else: #All the cases before group leaves starting tee
+            
             if TimedWalks == []:
                 TimedWalks.append(D_walked)
-                TimedWalks.append("1st Player stays")
+                TimedWalks.append("1st Player stays D")
+                tempy,tempX, tempTheta = xAxisDisc, yAxisLeft, theta
             else:
                 if TimedWalks[0] > D_walked:
                     TimedWalks[0] = D_walked
-                    TimedWalks[1] = "1st player switches"
-                    
-                    
-                    
-                    
-                    
-                    
+                    TimedWalks[1] = "1st player switches D"
+                    tempy,tempX, tempTheta = xAxisDisc, yAxisLeft, theta 
             
         ChangeTurnOrder(TurnOrder, furthestPlayer) # change turn order to the player who is furthest from the hole
         
@@ -167,8 +185,20 @@ def TeeTimeEstimation():
     for i in range(0, len(TimedWalks), 2):
         print(TimedWalks[i:i+2])
         
+        
+        
     result = sum(TimedWalks[0::2])
     print("Total distance walked is: ", result, "meters")
+  
+    for player, distances in PlayerMovements.items():
+        for i, d in enumerate(distances, 1):
+            print(f"{player} - Movement {i}: {d:.2f} meters")
+            
+      
+    for player, distances in PlayerMovements.items():
+        total_distance = sum(distances)
+        print(f"{player} traveled a total of {total_distance:.2f} meters")
+    
     
     #totTime = (40* totalShots) + (sum(TimedWalks)*1.4) #40 seconds per shot + time spent walking up to the furthest player and ball
     print("################################################")
