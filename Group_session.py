@@ -96,6 +96,7 @@ def TeeTimeEstimation():
             flag= 0
             
             if NoWalkUp == 0: #walk up for first player to leave starting tee
+                print( activePlayer, " is first to bat")
                 flag = 1
                 PlayerMovements[activePlayer].append(math.sqrt((tempY)**2  + (tempX - 0)**2))  #add distance walked for new player furthest from hole
                 PlayerPositions[activePlayer][0] = tempX #update xAxis distance to hole for player
@@ -138,6 +139,7 @@ def TeeTimeEstimation():
             else : #furthest player remains the active player
                 if flag == 0:
                     
+                    
                     #logging
                     TimedWalks.append(D_walked)
                     TimedWalks.append("Player stays D " +str(activePlayer))
@@ -169,12 +171,12 @@ def TeeTimeEstimation():
             if TimedWalks == []:
                 TimedWalks.append(D_walked)
                 TimedWalks.append("1st Player walking up stays  " + str(activePlayer)) 
-                tempY,tempX, tempTheta = xAxisDisc, yAxisLeft, theta
+                tempX, tempY, tempTheta = xAxisDisc, yAxisLeft, theta
             else:
                 if TimedWalks[0] > D_walked:
                     TimedWalks[0] = D_walked
                     TimedWalks[1] = "1st walkup switches " + str(activePlayer)
-                    tempY,tempX, tempTheta = xAxisDisc, yAxisLeft, theta 
+                    tempC, tempY, tempTheta = xAxisDisc, yAxisLeft, theta 
             
             
             
