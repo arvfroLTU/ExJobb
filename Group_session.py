@@ -44,9 +44,11 @@ def update_other_players_positions(excluded_player, yAxisGroup, TurnOrder, Playe
 
 def TeeTimeEstimation(TurnOrder, Distances, P_Hcp, holeLength, PlayerPositions, BallPositions, Players):
    
+   
     tempY = 0           #these three hold the positions of the player to shoot first after moving away from tee
     tempX = 0           # it's for an edge case. time calculation doesn't work without it
-    
+    cacheFlag = 0
+    TrackedPlayer = TurnOrder[0]
     yAxisGroup= 0
     totalShots = 0
     TimedWalks = []  # since players normally move concurrently, only the walkups to the worst shots should count for the amount of time 
@@ -211,18 +213,17 @@ def TeeTimeEstimation(TurnOrder, Distances, P_Hcp, holeLength, PlayerPositions, 
         print("Turn order is now: ", TurnOrder)
         
         activePlayer =  TurnOrder[0]
-        totalShots += 1
-        print ("Player: ", activePlayer, "Distance to hole: ", Distances[activePlayer])  
-        
-        #after the first four shots, the players walk up to the furthest player
-        NoWalkUp-= 1
-        
-        # To be used in SimCoordFeeder for continuing  simulation environment linked to reality.
-        if TurnNumber ==1:
+        if activePlayer== TrackedPlayer and cacheFlag ==0:
+            cacheFlag +=1
             cachedBallPos = BallPositions
             cachedPlayerPos = PlayerPositions
             cachedDistances = Distances
-            TurnsTakenCache = PlayerTurnsTaken
+            print("Cached ball position: ", cachedBallPos)
+            print("Cached player position: ", cachedPlayerPos)
+            print("Cached distances: ", cachedDistances)
+        
+        #after the first four shots, the players walk up to the furthest player
+        NoWalkUp-= 1
     
     for i in range(0, len(TimedWalks), 2):
         print(TimedWalks[i:i+2])
@@ -250,18 +251,17 @@ def TeeTimeEstimation(TurnOrder, Distances, P_Hcp, holeLength, PlayerPositions, 
     #print(totalShots, " shots taken", sum(TimedWalks), "meters walked", "total time spent: ", totTime/60, "minutes")
     print("################################################")
     
-    return cachedBallPos, cachedPlayerPos, cachedDistances, TurnsTakenCache
+    return cachedBallPos, cachedPlayerPos, cachedDistances
     
      
  
-def startingMidRoundSim(TurnOrder, Distances, P_Hcp, holeLength, PlayerPositions, BallPositions, Players):
+def startingMidRoundSim(TurnOrder, Distances, P_Hcp, PlayerPositions, BallPositions, Players):
        
     cacheFlag = 0
     TrackedPlayer = TurnOrder[0]
     yAxisGroup = max(PlayerPositions.values(), key=lambda x: x[1])[1]
     totalShots = 0
     TimedWalks = []  # since players normally move concurrently, only the walkups to the worst shots should count for the amount of time 
-    TurnNumber= 0
     
     activePlayer =  TurnOrder[0] 
     PlayerTurnsTaken = {Players[0]: 0, Players[1]: 0, Players[2]: 0, Players[3]: 0}
@@ -376,7 +376,7 @@ def startingMidRoundSim(TurnOrder, Distances, P_Hcp, holeLength, PlayerPositions
         
         activePlayer =  TurnOrder[0]
         if activePlayer== TrackedPlayer and cacheFlag ==0:
-            flag +=1
+            cacheFlag +=1
             cachedBallPos = BallPositions
             cachedPlayerPos = PlayerPositions
             cachedDistances = Distances
@@ -404,9 +404,7 @@ def startingMidRoundSim(TurnOrder, Distances, P_Hcp, holeLength, PlayerPositions
     return cachedBallPos, cachedPlayerPos, cachedDistances
   
   
-def midRoundSim(Player, holeLength, P_Hcp, PlayerPositions, BallPositions):
-    #TODO
-    pass
+
 TeeTimeEstimation(TurnOrder, Distances, P_Hcp, holeLength, PlayerPositions, BallPositions, Players)
 
 
