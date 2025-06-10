@@ -24,17 +24,13 @@ BallPositions = {Players[0]: [0, holeLength, 0], Players[1]: [0, holeLength, 0],
 coord = (0, 0)  # Placeholder for the coordinate of the tracked player
 coord_ready =threading.Event()
 
-
-
-
-
 "Beginning skeleton for real time implementation of the simulation"
-
 
 coordWait = True
 bad = False
 
 
+"Tests Setting observed variable to a coordinate"
 def goodCoordWait():
     global coord
     time.sleep(10)  # simulate delay before device gives coordinate
@@ -42,20 +38,27 @@ def goodCoordWait():
     bad =True
     print("[device] Coordinate set.")
 
-
+" Test observing architecure by observing the variable coordWait"
 def wait_for_player_movement():
     global coordinate
     while coordWait is bad:
         time.sleep(0.5)
     coord_ready.set()
     print("Coordinate received:", coord)
+    
+    
+    Blah= Group_session.coordinateToDistanceStart(coord)
+    
+    
+    #TODO Write coord into user database while running TeeTimeEstimation or midRoundSim 
+    
     bad = False
     
 
 threading.Thread(target=goodCoordWait, daemon=True).start()
 threading.Thread(target=wait_for_player_movement, daemon=True).start()
 
-input_thread = threading.Thread(target=wait_for_input)
+input_thread = threading.Thread(target=wait_for_player_movement)
 input_thread.start()
 
 

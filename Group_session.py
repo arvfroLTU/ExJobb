@@ -1,5 +1,6 @@
 import ShotSim
 import math
+from geopy.distance import geodesic
 
 
 holeLength  = 440
@@ -403,9 +404,31 @@ def startingMidRoundSim(TurnOrder, Distances, P_Hcp, PlayerPositions, BallPositi
     
     return cachedBallPos, cachedPlayerPos, cachedDistances
   
+Coord = 0
+DistanceTravelledSinceLastLog = 0
+
+def coordinateToDistanceStart(Coord):
+    
+    return DistanceTravelledSinceLastLog
+  
+def coordinateToDistanceMid():
+    
+    # set distance to distance between:
+    
+    # rough estimate of first hole
+    # start coord: 63.716193, 20.401339
+    # end coord: 63.716720, 20.406796
+    
+    
+    Tee = (63.716193, 20.401339)  
+    Hole =(63.716720, 20.406796)
+
+    distance_m = geodesic(Tee, Hole).meters
+    print(f"Distance from Tee to Hole: {distance_m:.2f} meters")
+    return 
   
 
 TeeTimeEstimation(TurnOrder, Distances, P_Hcp, holeLength, PlayerPositions, BallPositions, Players)
 
-
+coordinateToDistanceMid()
 
