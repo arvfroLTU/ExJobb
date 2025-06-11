@@ -253,8 +253,6 @@ def TeeTimeEstimation(TurnOrder, Distances, P_Hcp, holeLength, PlayerPositions, 
     print("################################################")
     
     return cachedBallPos, cachedPlayerPos, cachedDistances
-    
-     
  
 def startingMidRoundSim(TurnOrder, Distances, P_Hcp, PlayerPositions, BallPositions, Players):
        
@@ -416,8 +414,18 @@ def coordinateToDistanceMid():
     # set distance to distance between:
     
     # rough estimate of first hole
-    # start coord: 63.716193, 20.401339
-    # end coord: 63.716720, 20.406796
+    
+    #Red 9
+    #start: 63.714834, 20.408835
+    # end: 63.715221, 20.400680
+    
+    #Blue 9
+    #Start: 63.713914, 20.400604
+    #End:  63.715154, 20.399921
+    
+    #Yellow 9
+    # Start 63.715103, 20.396621
+    #End:   63.715500, 20.398920
     
     
     Tee = (63.716193, 20.401339)  

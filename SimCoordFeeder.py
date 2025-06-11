@@ -19,28 +19,28 @@ Distances = {Players[0]: holeLength, Players[1]: holeLength, Players[2]: holeLen
 PlayerPositions = {Players[0]: [0, holeLength], Players[1]: [0, holeLength], Players[2]: [0, holeLength], Players[3]: [0, holeLength]} #TODO fetch from DB
 BallPositions = {Players[0]: [0, holeLength, 0], Players[1]: [0, holeLength, 0], Players[2]: [0, holeLength, 0], Players[3]: [0, holeLength, 0]} #TODO fetch from DB
 
-
-
-coord = (0, 0)  # Placeholder for the coordinate of the tracked player
-coord_ready =threading.Event()
-
 "Beginning skeleton for real time implementation of the simulation"
 
 coordWait = True
 bad = False
+coord = (0, 0)  # Placeholder for the coordinate of the tracked player
+coord_ready =threading.Event()
+
 
 
 "Tests Setting observed variable to a coordinate"
-def goodCoordWait():
+def coordSubmission(coordX, coordY):
     global coord
-    time.sleep(10)  # simulate delay before device gives coordinate
-    coord = (59.3293, 18.0686)  
+    global bad
+    coord = (coordX, coordY)  
     bad =True
-    print("[device] Coordinate set.")
+    print(" coordSubmission[device] Coordinate set. to" + str(coordX) + ' ' + str(coordY))
 
 " Test observing architecure by observing the variable coordWait"
 def wait_for_player_movement():
     global coordinate
+    global bad
+    global coordWait
     while coordWait is bad:
         time.sleep(0.5)
     coord_ready.set()
@@ -53,21 +53,11 @@ def wait_for_player_movement():
     #TODO Write coord into user database while running TeeTimeEstimation or midRoundSim 
     
     bad = False
-    
-
-threading.Thread(target=goodCoordWait, daemon=True).start()
-threading.Thread(target=wait_for_player_movement, daemon=True).start()
-
-input_thread = threading.Thread(target=wait_for_player_movement)
-input_thread.start()
-
-
-
 
 
 #TODO Store this somewhere
 # 1st  run stored
-BallPositions, PlayerPositions, Distances = Group_session.TeeToTimeEstimation(TurnOrder, Distances, P_Hcp, holeLength, PlayerPositions, BallPositions, Players)
+BallPositions, PlayerPositions, Distances = Group_session.TeeTimeEstimation(TurnOrder, Distances, P_Hcp, holeLength, PlayerPositions, BallPositions, Players)
 
 
 
@@ -97,4 +87,40 @@ def midRoundSim(Player, holeLength, P_Hcp, PPositions, BallPositions, PPos, APDi
     pass
 
 
-#The model of the golf course should be able to be simplified to a straight 2d plane
+def entered_9th_hole_check():
+    
+    from geopy.distance import geodesic
+
+    def check_nearby_course_color(coord):
+        # Define start coordinates with colors
+        starts = {
+            "Red": (63.714834, 20.408835),
+            "Blue": (63.713914, 20.400604),
+            "Yellow": (63.715103, 20.396621)
+        }
+
+        for color, start_coord in starts.items():
+            distance = geodesic(coord, start_coord).meters
+            if distance <= 10:
+                return True, color
+
+        return False, None
+    
+    
+def start_observer_threads():
+    t1 = threading.Thread(target=wait_for_player_movement)
+    t1.start()
+    return t1
+
+def start_active_thread(x, y):
+    t1 = threading.Thread(target=coordSubmission, args=(x, y), daemon=True)
+    t1.start()
+    return t1
+    
+threading.Thread(target=coordSubmission, args = (1337, 7331), daemon=True).start()
+threading.Thread(target=wait_for_player_movement, daemon=True).start()
+
+input_thread = threading.Thread(target=wait_for_player_movement)
+input_thread.start()
+
+
