@@ -9,6 +9,7 @@ from geopy.distance import geodesic
 
 ################## STARTING VARIABLES FOR SIM #########################
 
+currentRunDistanceValues = []
 holeLength = 440  #TODO fetch hole length from DB
 Players = ["Player1", "Player2", "Player3", "Player4"] #TODO  fetch userID from DB here and for all players
 Hcp1, Hcp2, Hcp3, Hcp4 = 34, 20, 15, 10 #TODO fetch from DB
@@ -47,6 +48,13 @@ stop_thread = threading.Event()
 
 ###################### Base observer pattern ###############################
 
+def signal_handler(sig, frame):
+    print("\nStopping threads...")
+    stop_thread.set()
+    coord_ready.set()  # Wake any waiting threads so they can exit
+    sys.exit(0)
+    
+signal.signal(signal.SIGINT, signal_handler)
 
 def start_observer_threads():
     t1 = threading.Thread(target=wait_for_player_movement)
@@ -70,7 +78,7 @@ def coordSubmission(coordX, coordY):
 
 
 
-" Test observing architecure by observing the variable coordWait"
+" Calls further simulation and logs possibilities when system recieves a coordinate"
 
 def wait_for_player_movement():
     global coord
@@ -89,39 +97,33 @@ def wait_for_player_movement():
             break
         if triggered:
             print("Coordinate received:", coord)
-            
-            
-            #intended to return the total amount of space travelled by the active player
-            
-            BallPositions, PlayerPositions, Distances = midRoundSim(Players[0], holeLength, P_Hcp[Players[0]], PlayerPositions, BallPositions, coord)
-            
-            
-            
-            
+            midRoundSim(Players[0], holeLength, P_Hcp[Players[0]], PlayerPositions, BallPositions, coord)
             RecieverReady = False
             coord_ready.clear()  # Go back to waiting
             
-            
-            
-            
-        
+            #TODO log posssible end  time here
+ 
+ 
+####################################### Simulations ##############################################
 
-def signal_handler(sig, frame):
-    print("\nStopping threads...")
-    stop_thread.set()
-    coord_ready.set()  # Wake any waiting threads so they can exit
-    sys.exit(0)
+
+#Can take coordinates of single player in respect to hole, and start a simulation from there              
+def midRoundSim(Player, holeLength, P_Hcp, PlayerPositions, BallPositions, PPos):
     
-signal.signal(signal.SIGINT, signal_handler)
-
-
-
-#TODO Store this somewhere
-# 1st  run stored
-BallPositions, PlayerPositions, Distances = Group_session.TeeTimeEstimation(TurnOrder, Distances, P_Hcp, holeLength, PlayerPositions, BallPositions, Players)
-
-
-
+    global Players
+    global Distances
+    
+    #TODO Take Tracked player into account, only when tracked player is last will this occur
+    #TODO tracked player will also be first in turn order
+    
+    #BallPosition assumed correct from previous sim and fetched here
+    
+    BallPositions, PlayerPositions, Distances = Group_session.startingMidRoundSim(Players, Distances, P_Hcp, PlayerPositions, BallPositions, Players)
+    UpdateUserPosition(PPos) # overwrites sim data with actual data
+    
+    Group_session.startingMidRoundSim(Players, Distances, P_Hcp, holeLength, PlayerPositions, BallPositions, Players)
+    
+    pass           
 
 "takes user position as indata and runs next round of simulation for tracked player"
 def UpdateUserPosition(TrackedPlayerPosition):
@@ -134,42 +136,26 @@ def UpdateUserPosition(TrackedPlayerPosition):
     Distances[Players[0]] = geodesic(TrackedPlayerPosition, (63.715154, 20.399921)).meters  #Set to blue hole
     PlayerPositions[Players[0]] = TrackedPlayerPosition
     
-    
 
-
-
-#Can take coordinates of single player in respect to hole, and start a simulation from there   
-def midRoundSim(Player, holeLength, P_Hcp, PlayerPositions, BallPositions, PPos):
-    
-    #TODO Take Tracked player into account, only when tracked player is last will this occur
-    #TODO tracked player will also be first in turn order
-    
-    #BallPosition assumed correct from previous sim and fetched here
-    
-    
-    BallPositions, PlayerPositions, Distances = Group_session.startingMidRoundSim(Players, Distances, P_Hcp, PlayerPositions, BallPositions, Players)
-    UpdateUserPosition(PPos) # overwrites sim data with actual data
-    
-    Group_session.startingMidRoundSim(Players, Distances, P_Hcp, holeLength, PlayerPositions, BallPositions, Players)
-    
+def logTime(D_over_avg_velocity):
+    #TODO  gather time data from each run annd log it for further analysis
     pass
-
+    
 
 def entered_9th_hole_check():
 
-    def check_nearby_course_color(coord):
-        starts = {
+    starts = {
             "Red": (63.714834, 20.408835),
-            "Blue": (63.713914, 20.400604),
+            "Blue": (63.713914, 20.400604),  # Set to blue hole currently
             "Yellow": (63.715103, 20.396621)
         }
 
-        for color, start_coord in starts.items():
+    for color, start_coord in starts.items():
             distance = geodesic(coord, start_coord).meters
             if distance <= 10:
                 return True, color
 
-        return False, None
+    return False, None
     
 
 
@@ -177,4 +163,8 @@ def entered_9th_hole_check():
 input_thread = threading.Thread(target=wait_for_player_movement, daemon=True)
 input_thread.start()
 
+#TODO Store this somewhere
+# 1st  run stored
+BallPositions, PlayerPositions, Distances = Group_session.TeeTimeEstimation(TurnOrder, Distances, P_Hcp, holeLength, PlayerPositions, BallPositions, Players)
 
+#TODO log end time here
