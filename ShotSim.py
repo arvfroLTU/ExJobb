@@ -54,7 +54,7 @@ def setHoleDistance(distance):
 
 
 
-def failureCheck(handicap):
+def failureCheck(handicap): 
         value = random.randint(0, 100) 
         
         if value > handicap:
