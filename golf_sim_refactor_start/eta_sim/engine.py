@@ -3,11 +3,11 @@ from math import sin, cos, pi
 import random
 
 @dataclass(frozen=True)
-class MovementParams:
-    walk_speed_mps: float = 1.4  # Modulate as needed 
-    pre_shot_address_s: float = 5.0
+class MovementParams:                                       # These will normally change based on player skill/handicap but have been frozen for simplicity
+    walk_speed_mps: float = 1.4  # Modulate as needed  1,4 for a relaxed pace , 1, 7 for a hasty approach
+    pre_shot_address_s: float = 30.0
     swing_s: float = 2.0
-    approach_threshold_m: float = 1.0
+    approach_threshold_m: float = 1.0 # How close to the ball before stopping
 
 class ShotEngine:
     def __init__(self, rng: random.Random | None = None):

@@ -21,5 +21,5 @@ class Snapshot:
     hole_distance_m: float
     players: Dict[str, Player]
     state: Dict[str, PlayerState]
-    # name of the "tracked" user whose ETA we want
+    # name of the "tracked" user whose ETA we want 
     tracked: str
