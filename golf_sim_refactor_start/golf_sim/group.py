@@ -11,6 +11,8 @@ class PlayerState:
     player: Player
     ball: Ball
     feet: Position  # where the player is currently standing
+    walked_m: float = 0.0
+    
 
 @dataclass
 class GroupTraceItem:
@@ -93,9 +95,18 @@ class GroupSimulator:
                 if name == shooter_name:
                     continue
                 target = st.ball.pos
+                
+                old_pos = st.feet
                 st.feet = self.movement.step_toward(st.feet, target, dt_walk_s, floor_y=floor_y)
+                # accumulate Euclidean distance walked
+                dx = st.feet.x - old_pos.x
+                dy = st.feet.y - old_pos.y
+                st.walked_m += (dx*dx + dy*dy) ** 0.5
+
                 trace.append(GroupTraceItem(kind='walk', player=name, data={
+                    'feet_x': st.feet.x,
                     'feet_y': st.feet.y,
+                    'target_ball_x': target.x,
                     'target_ball_y': target.y,
                     'floor_y': floor_y,
                 }))

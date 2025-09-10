@@ -16,8 +16,10 @@ class ShotEngine:
 
     def failure_check(self, handicap: int) -> bool:
         # value > handicap -> success (False), else failure (True)
-        return self.rng.randint(0, 100) <= handicap
-
+        # Floor failure chance at 2% even for scratch players
+        p_fail = max(0.02, handicap / 100.0)   # 2% .. 36%
+        return self.rng.uniform(0.0, 1.0) < p_fail
+    
     def critical_hit(self, handicap: int) -> bool:
         # Max ~2% (36hcp) .. ~6% (scratch) in original spirit
         check = self.rng.randint(0, 100)

@@ -20,10 +20,10 @@ class MovementModel:
             return current
 
         speed = self.params.walk_speed_mps
-        # distance toward target
         dx = target.x - current.x
         dy = target.y - current.y
         dist = (dx*dx + dy*dy) ** 0.5
+
         if dist == 0:
             new_x, new_y = current.x, current.y
         else:
@@ -32,6 +32,12 @@ class MovementModel:
             new_y = current.y + (dy / dist) * step
 
         if floor_y is not None:
-            # Can't go *below* floor_y (closer to hole). hole is y=0, so "below" means < floor_y
-            new_y = max(new_y, floor_y)
+            if current.y <= floor_y:
+                # Already *closer* than the no-pass boundary: don't move forward or backwards.
+                return current
+            # Otherwise, clamp only if we would pass the boundary this step.
+            if new_y < floor_y:
+                new_y = floor_y
+                # Optional: project x to the line at floor_y. For simplicity keep x as computed.
+
         return Position(new_x, new_y)
